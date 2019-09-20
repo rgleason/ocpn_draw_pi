@@ -425,6 +425,7 @@ PathAndPointManagerDialogImpl::PathAndPointManagerDialogImpl(wxWindow* parent) :
 {
     m_parent_window = parent;
     m_iPage = -1;
+    m_bCtrlDown = false;
     
     long style = wxDEFAULT_DIALOG_STYLE | wxRESIZE_BORDER;
     #ifdef __WXOSX__
@@ -504,6 +505,7 @@ void PathAndPointManagerDialogImpl::SetImportButtonText(void)
                 l_sLabel.Append(g_pODConfig->m_sImport_Type);
                 l_sLabel.Append(_T("..."));
                 m_buttonImport->SetLabel(l_sLabel);
+                m_buttonImport->Enable();
             }
             break;
         }
@@ -516,19 +518,21 @@ void PathAndPointManagerDialogImpl::SetImportButtonText(void)
                 l_sLabel.Append(g_pODConfig->m_sImport_Type);
                 l_sLabel.Append(_T("..."));
                 m_buttonImport->SetLabel(l_sLabel);
+                m_buttonImport->Enable();
             }
             break;
         }
         case 2: {
             // Layer
-            if( m_listCtrlLayers ) {
-                UpdateLayerListCtrl();
-                wxString l_sLabel = _("I&mport");
-                l_sLabel.Append(_T(" "));
-                l_sLabel.Append(_("gpx"));
-                l_sLabel.Append(_T("..."));
-                m_buttonImport->SetLabel(l_sLabel);
-            }
+            m_buttonImport->Disable();
+            //            if( m_listCtrlLayers ) {
+//                UpdateLayerListCtrl();
+//                wxString l_sLabel = _("I&mport");
+//                l_sLabel.Append(_T(" "));
+//                l_sLabel.Append(_("gpx"));
+//                l_sLabel.Append(_T("..."));
+//                m_buttonImport->SetLabel(l_sLabel);
+//            }
             break;
         }            
         case wxNOT_FOUND:
@@ -740,6 +744,7 @@ void PathAndPointManagerDialogImpl::OnPathCenterViewClick( wxCommandEvent &event
     }
     
     ZoomtoPath( path );
+    m_bCtrlDown = false;
 }
 
 void PathAndPointManagerDialogImpl::OnPathExportSelectedClick( wxCommandEvent &event )
@@ -798,6 +803,7 @@ void PathAndPointManagerDialogImpl::OnPathActivateClick( wxCommandEvent &event )
     UpdatePathListCtrl();
     
     g_pODConfig->UpdatePath( ppath );
+    m_bCtrlDown = false;
     
     RequestRefresh( GetOCPNCanvasWindow() );
 }
@@ -1639,6 +1645,10 @@ void PathAndPointManagerDialogImpl::OnLayerDeleteClick( wxCommandEvent &event )
     if ( answer == wxID_NO )
         return;
     
+    // if layer is permanent delete file
+    if(wxFileExists(layer->m_LayerFileName))
+        wxRemoveFile(layer->m_LayerFileName);
+    
     // Process Paths in this layer
     wxPathListNode *node1 = g_pPathList->GetFirst();
     wxPathListNode *node2;
@@ -1924,10 +1934,9 @@ void PathAndPointManagerDialogImpl::UpdateLayerListCtrl()
 
 void PathAndPointManagerDialogImpl::OnImportClick( wxCommandEvent &event )
 {
-    #ifdef __WXOSX__
+#ifdef __WXOSX__
     HideWithEffect(wxSHOW_EFFECT_BLEND );
-    #endif
-    
+#endif
     wxString l_sLabel = _("I&mport");
     l_sLabel.Append(_T(" "));
     g_pODConfig->UI_Import( this );
@@ -1935,9 +1944,9 @@ void PathAndPointManagerDialogImpl::OnImportClick( wxCommandEvent &event )
     l_sLabel.Append(_T("..."));
     m_buttonImport->SetLabel(l_sLabel);
     
-    #ifdef __WXOSX__
+#ifdef __WXOSX__
     ShowWithEffect(wxSHOW_EFFECT_BLEND );
-    #endif
+#endif
     
     UpdatePathListCtrl();
     UpdateODPointsListCtrl();

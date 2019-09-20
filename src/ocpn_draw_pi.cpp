@@ -102,6 +102,7 @@ static const long long lNaN = 0xfff8000000000000;
 #endif
 
 ocpn_draw_pi            *g_ocpn_draw_pi;
+wxString                *g_ocpn_draw_display_name;
 wxWindow                *g_parent_window;
 PathList                *g_pPathList;
 PointMan                *g_pODPointMan;
@@ -500,6 +501,8 @@ int ocpn_draw_pi::Init(void)
     g_bRememberPropertyDialogPosition = false;
     m_mouse_canvas_index = -1;
     m_drawing_canvas_index = -1;
+    g_bShowLayers = false;
+    g_ocpn_draw_display_name = new wxString("OCPN Draw");
     
     // Drawing modes from toolbar
     m_Mode = 0;
@@ -1455,6 +1458,7 @@ void ocpn_draw_pi::SaveConfig()
             pConf->Write( wxS( "ToolBarPosX" ), g_iToolbarPosX );
             pConf->Write( wxS( "ToolBarPosY" ), g_iToolbarPosY );
             pConf->Write( wxS( "DisplayToolbar"), g_iDisplayToolbar );
+            pConf->Write( wxS( "DefaultShowLayers"), g_bShowLayers );
             pConf->Write( wxS( "DefaultTextPointShowName"), g_bTextPointShowName );
             pConf->Write( wxS( "DefaultTextPointIcon" ), g_sTextPointIconName );
             pConf->Write( wxS( "DefaultTextColour" ), g_colourDefaultTextColour.GetAsString( wxC2S_CSS_SYNTAX ) );
@@ -1757,6 +1761,7 @@ void ocpn_draw_pi::LoadConfig()
         pConf->Read( wxS( "ToolBarPosX" ), &g_iToolbarPosX, 0);
         pConf->Read( wxS( "ToolBarPosY" ), &g_iToolbarPosY, 0);
         pConf->Read( wxS( "DisplayToolbar" ), &g_iDisplayToolbar, 1 );
+        pConf->Read( wxS( "DefaultShowLayers"), &g_bShowLayers, false );
 
         pConf->Read( wxS( "DefaultTextPointShowName"), &g_bTextPointShowName, false );
         pConf->Read( wxS( "DefaultTextPointIcon" ), &g_sTextPointIconName, wxS("Circle") );

@@ -40,6 +40,12 @@ ODPropertiesDialogDef::ODPropertiesDialogDef( wxWindow* parent, wxWindowID id, c
 	m_checkBoxAllowLeftDrag = new wxCheckBox( m_panelGeneral, wxID_ANY, _("Allow Left Mouse Button Drag"), wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT );
 	fgSizer4->Add( m_checkBoxAllowLeftDrag, 0, wxALL, 5 );
 
+	m_checkBoxShowLayers = new wxCheckBox( m_panelGeneral, wxID_ANY, _("Show Layers"), wxDefaultPosition, wxDefaultSize, wxALIGN_RIGHT );
+	fgSizer4->Add( m_checkBoxShowLayers, 0, wxALL, 5 );
+
+
+	fgSizer4->Add( 0, 0, 1, wxEXPAND, 5 );
+
 	m_staticTextNavObjBackups = new wxStaticText( m_panelGeneral, wxID_ANY, _("OCPN_Draw Nav Object Backups"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticTextNavObjBackups->Wrap( -1 );
 	fgSizer4->Add( m_staticTextNavObjBackups, 0, wxALL, 5 );
@@ -477,7 +483,7 @@ ODPropertiesDialogDef::ODPropertiesDialogDef( wxWindow* parent, wxWindowID id, c
 	m_panelTextPoint->SetSizer( fgSizerTextPoint );
 	m_panelTextPoint->Layout();
 	fgSizerTextPoint->Fit( m_panelTextPoint );
-	m_notebookProperties->AddPage( m_panelTextPoint, _("Text Point"), true );
+	m_notebookProperties->AddPage( m_panelTextPoint, _("Text Point"), false );
 	m_panelPath = new wxPanel( m_notebookProperties, wxID_ANY, wxDefaultPosition, wxDefaultSize, 0 );
 	m_panelPath->Enable( false );
 	m_panelPath->Hide();
@@ -1392,7 +1398,7 @@ ODPropertiesDialogDef::ODPropertiesDialogDef( wxWindow* parent, wxWindowID id, c
 
 	m_staticTextData = new wxStaticText( m_panelAbout, wxID_ANY, _("Data:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticTextData->Wrap( -1 );
-	fgSizer49->Add( m_staticTextData, 0, wxALIGN_RIGHT|wxALL, 5 );
+	fgSizer49->Add( m_staticTextData, 0, wxALL, 5 );
 
 	m_staticTextDataDirectory = new wxStaticText( m_panelAbout, wxID_ANY, _("Data Directory"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticTextDataDirectory->Wrap( -1 );
@@ -1400,7 +1406,7 @@ ODPropertiesDialogDef::ODPropertiesDialogDef( wxWindow* parent, wxWindowID id, c
 
 	m_staticTextIcons = new wxStaticText( m_panelAbout, wxID_ANY, _("User Icons:"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticTextIcons->Wrap( -1 );
-	fgSizer49->Add( m_staticTextIcons, 0, wxALIGN_RIGHT|wxALL, 5 );
+	fgSizer49->Add( m_staticTextIcons, 0, wxALL, 5 );
 
 	m_staticTextIconDirectory = new wxStaticText( m_panelAbout, wxID_ANY, _("Icon Directory"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticTextIconDirectory->Wrap( -1 );
@@ -1440,7 +1446,7 @@ ODPropertiesDialogDef::ODPropertiesDialogDef( wxWindow* parent, wxWindowID id, c
 	m_panelAbout->SetSizer( bSizerAbout );
 	m_panelAbout->Layout();
 	bSizerAbout->Fit( m_panelAbout );
-	m_notebookProperties->AddPage( m_panelAbout, _("About"), false );
+	m_notebookProperties->AddPage( m_panelAbout, _("About"), true );
 	m_panelHelp = new wxPanel( m_notebookProperties, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL );
 	wxFlexGridSizer* fgSizer22;
 	fgSizer22 = new wxFlexGridSizer( 0, 1, 0, 0 );
