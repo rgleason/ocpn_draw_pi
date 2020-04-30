@@ -32,6 +32,7 @@
 
 #include "BoundaryPointCSVImport.h"
 #include "ocpn_draw_pi.h"
+#include "globals.h"
 
 #include <wx/tokenzr.h>
 
@@ -48,21 +49,32 @@ BoundaryPointCSVImport::~BoundaryPointCSVImport()
     //dtor
 }
 
-BoundaryPointCSVImport::BoundaryPointCSVImport(wxStringTokenizer BoundaryPointCSV)
+BoundaryPointCSVImport::BoundaryPointCSVImport(wxStringTokenizer *BoundaryPointCSV)
 {
     //ctor
-    size_t l_count = BoundaryPointCSV.CountTokens();
+    BoundaryPointCSV->SetString(BoundaryPointCSV->GetString(), ",");
+    wxString l_sToken = BoundaryPointCSV->GetNextToken();
+    size_t l_count = BoundaryPointCSV->CountTokens();
+    wxString l_sLatLon;
     m_sName.Clear();
     m_dLat = 0;
     m_dLon = 0;
     if(l_count >= 3) {
-        m_sName = BoundaryPointCSV.GetNextToken();
+        m_sName = BoundaryPointCSV->GetNextToken();
         m_sName = m_sName.SubString(1, m_sName.Length()-2);
-        BoundaryPointCSV.GetNextToken().ToDouble(&m_dLat);
-        BoundaryPointCSV.GetNextToken().ToDouble(&m_dLon);
+        l_sLatLon = BoundaryPointCSV->GetNextToken();
+        if(l_sLatLon.Find('N', true) || l_sLatLon.Find('n', true) || l_sLatLon.Find('S', true) || l_sLatLon.Find('s', true))
+            m_dLat = fromDMM_Plugin(l_sLatLon);
+        else
+            l_sLatLon.ToDouble(&m_dLat);
+        l_sLatLon = BoundaryPointCSV->GetNextToken();
+        if(l_sLatLon.Find('E', true) || l_sLatLon.Find('e', true) || l_sLatLon.Find('W', true) || l_sLatLon.Find('w', true))
+            m_dLon = fromDMM_Plugin(l_sLatLon);
+        else
+            l_sLatLon.ToDouble(&m_dLon);
     } 
     if(l_count >= 4) {
-        wxString l_type = BoundaryPointCSV.GetNextToken();
+        wxString l_type = BoundaryPointCSV->GetNextToken();
         if(l_type == _T("'Exclusion'")) {
             m_bExclusion = true;
             m_bInclusion = false;
@@ -78,7 +90,7 @@ BoundaryPointCSVImport::BoundaryPointCSVImport(wxStringTokenizer BoundaryPointCS
         }
     } 
     if(l_count >= 5) {
-        wxString vis = BoundaryPointCSV.GetNextToken();
+        wxString vis = BoundaryPointCSV->GetNextToken();
         if(vis == _T("'F'") || vis == _T("'f'"))
             m_bVisible = false;
         else
@@ -87,7 +99,7 @@ BoundaryPointCSVImport::BoundaryPointCSVImport(wxStringTokenizer BoundaryPointCS
         m_bVisible = g_bBoundaryODPointsVisible;
     
     if(l_count >= 6) {
-        wxString vis = BoundaryPointCSV.GetNextToken();
+        wxString vis = BoundaryPointCSV->GetNextToken();
         if(vis == _T("'F'") || vis == _T("'f'"))
             m_bRangeRingsVisible = false;
         else
@@ -96,17 +108,17 @@ BoundaryPointCSVImport::BoundaryPointCSVImport(wxStringTokenizer BoundaryPointCS
         m_bRangeRingsVisible = g_bODPointShowRangeRings;
     
     if(l_count >= 7) {
-        BoundaryPointCSV.GetNextToken().ToLong((long int *)&m_iNumRings);
+        BoundaryPointCSV->GetNextToken().ToLong((long int *)&m_iNumRings);
     } else
         m_iNumRings = g_iODPointRangeRingsNumber;
     
     if(l_count >= 8) {
-        BoundaryPointCSV.GetNextToken().ToDouble(&m_dStep);
+        BoundaryPointCSV->GetNextToken().ToDouble(&m_dStep);
     } else
         m_dStep = g_fODPointRangeRingsStep;
     
     if(l_count >= 9) {
-        wxString units = BoundaryPointCSV.GetNextToken();
+        wxString units = BoundaryPointCSV->GetNextToken();
         if(units == _T("'K'") || units == _T("'k'")) {
             m_iUnits = ID_KILOMETERS;
         } else
@@ -115,7 +127,10 @@ BoundaryPointCSVImport::BoundaryPointCSVImport(wxStringTokenizer BoundaryPointCS
         m_iUnits = g_iODPointRangeRingsStepUnits;
         
     if(l_count >= 10) {
-        m_RingColour.Set(BoundaryPointCSV.GetNextToken());
+        BoundaryPointCSV->SetString(BoundaryPointCSV->GetString(), "'");
+        wxString l_rgb = BoundaryPointCSV->GetString();
+        l_rgb = l_rgb.SubString(1, l_rgb.Length()-2);
+        m_RingColour.Set(l_rgb);
     } else
         m_RingColour = g_colourODPointRangeRingsColour;
 }
