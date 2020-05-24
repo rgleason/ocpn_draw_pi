@@ -16,9 +16,6 @@ if(COMMAND cmake_policy)
     endif(POLICY CMP0077)
 endif(COMMAND cmake_policy)
 
-PROJECT(ocpn_draw_pi)
-SET(PARENT "opencpn")
-
 SET(VERBOSE_NAME "OCPN_Draw")
 set(COMMON_NAME "OCPN Draw")
 set(TITLE_NAME "OCPNDRAW")
@@ -27,9 +24,9 @@ set(PACKAGE "ocpn_draw")
 
 SET(VERSION_MAJOR "1")
 SET(VERSION_MINOR "6")
-SET(VERSION_PATCH "72")
+SET(VERSION_PATCH "88")
 set(VERSION_TWEAK "0")
-SET(VERSION_DATE "25/04/2020")
+SET(VERSION_DATE "24/05/2020")
 SET(OCPN_MIN_VERSION "ov50")
 SET(OCPN_API_VERSION_MAJOR "1")
 SET(OCPN_API_VERSION_MINOR "16")
@@ -42,39 +39,9 @@ MESSAGE(STATUS "OCPN API Verson: ${OCPN_API_VERSION_MAJOR}.${OCPN_API_VERSION_MI
 MESSAGE(STATUS "OCPN Min Verson: ${OCPN_MIN_VERSION}")
 
 set(PARENT "opencpn")
-set(GIT_USER "jongough")
-set(GIT_REPOSITORY_NAME "ocpn_draw_pi")
-message(STATUS "CIRCLECI: ${CIRCLECLI}, Env CIRCLECI: $ENV{CIRCLECI}")
-message(STATUS "TRAVIS: ${TRAVIS}, Env TRAVIS: $ENV{TRAVIS}")
-# This if allows for setting up your own local webserver with git on it for testing purposes
-if($ENV{CIRCLECI})
-    set(GIT_REPOSITORY_HOST "github.com")
-    set(GIT_REPOSITORY_DIR "${GIT_USER}/")
-    set(GIT_REPOSITORY_BRANCH "$ENV{CIRCLE_BRANCH}")
-elseif($ENV{TRAVIS})
-    set(GIT_REPOSITORY_HOST "github.com")
-    set(GIT_REPOSITORY_DIR "${GIT_USER}/")
-    set(GIT_REPOSITORY_BRANCH "$ENV{TRAVIS_BRANCH}")
-elseif($ENV{APPVEYOR})
-    set(GIT_REPOSITORY_HOST "github.com")
-    set(GIT_REPOSITORY_DIR "${GIT_USER}/")
-    set(GIT_REPOSITORY_BRANCH "$ENV{APPVEYOR_REPO_BRANCH}")
-else()
-    set(GIT_REPOSITORY_HOST "github.com")
-    set(GIT_REPOSITORY_DIR "${GIT_USER}/")
-    # Get the current working branch
-    execute_process(
-        COMMAND git rev-parse --abbrev-ref HEAD
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        OUTPUT_VARIABLE GIT_REPOSITORY_BRANCH
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-      )
-    if(${GIT_REPOSITORY_BRANCH} EQUAL "")
-        message(STATUS "Setting default GIT repository branch - master")
-        set(GIT_REPOSITORY_BRANCH "master")
-    endif()
-endif()
-message(STATUS "Git Branch: ${GIT_REPOSITORY_BRANCH}")
+
+# The next line allows for setting up your own local webserver with git on it for testing purposes, the default is github.com
+set(GIT_REPOSITORY_SERVER "github.com")
 
 # Builds repository sufficies
 set(PROD "prod")    #Standard Repos
@@ -82,11 +49,11 @@ set(BETA "beta")    #Standard Repos
 set(ALPHA "alpha")  #Standard Repos
 
 set(CLOUDSMITH_USER "jon-gough")
-set(CLOUDSMITH_BASE_REPOSITORY "${GIT_REPOSITORY_NAME}")
+# set this if your cloudsmith repository name does not match your git repository name
+#set(CLOUDSMITH_BASE_REPOSITORY "${GIT_REPOSITORY_NAME}")
 set(XML_INFO_URL "https://opencpn.org/OpenCPN/plugins/ocpn_draw.html")
 set(XML_SUMMARY "Drawing Plugin to allow extra objects to be drawn and used within OCPN")
 set(XML_DESCRIPTION "OCPN_DRAW (OD) is a plugin that extends the capability of OCPN to include non-standard object: Boundaries, Boundary Points, Text Points, Dead Reckoning paths, Electronic Bearing Lines (EBL) and Guard Zones. The plugin also has an API to allow other plugins to directly interact with it.")
-set(APPVEYOR_TEST_DEPLOY_TO_CLOUDSMITH "true")
 
 ##
 ## ----- Modify section above to include all the details for your plugin ----- ##
@@ -137,9 +104,9 @@ set(PKG_URL "https://dl.cloudsmith.io/public/--pkg_repo--/raw/names/--name--/ver
 include("cmake/PluginSetup.cmake")
 
 if(DEFINED ENV{OCPN_TARGET})
-    set(PACKAGING_NAME "${PKG_NVR}_${PKG_TARGET}-${PKG_TARGET_VERSION}-$ENV{OCPN_TARGET}")
+    set(PACKAGING_NAME "${PKG_NVR}_${PKG_TARGET}-${ARCH}_${PKG_TARGET_VERSION}-$ENV{OCPN_TARGET}")
 else(DEFINED ENV{OCPN_TARGET})
-    set(PACKAGING_NAME "${PKG_NVR}_${PKG_TARGET}-${PKG_TARGET_VERSION}")
+    set(PACKAGING_NAME "${PKG_NVR}_${PKG_TARGET}-${ARCH}_${PKG_TARGET_VERSION}")
 endif(DEFINED ENV{OCPN_TARGET})
 message(STATUS "PACKAGING_NAME: ${PACKAGING_NAME}")
 
