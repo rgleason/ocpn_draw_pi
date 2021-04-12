@@ -33,7 +33,14 @@
 #include "ODdc.h"
 #include "ocpn_draw_pi.h"
 
-#include "GL/gl.h"
+#ifndef __OCPN__ANDROID__
+#include <GL/gl.h>
+#include <GL/glu.h>
+#else
+#include "qopengl.h"                  // this gives us the qt runtime gles2.h
+#include <GL/gl_private.h>
+#endif
+
 #include <wx/graphics.h>
 
 //extern PlugIn_ViewPort  g_VP;
@@ -203,5 +210,7 @@ void BoundaryPoint::DrawGL(PlugIn_ViewPort& pivp)
         }
     }
     ODPoint::DrawGL( pivp );
+#else
+    wxLogMessage( _("BoundaryPoint not drawn as OpenGL not available in this build") );
 #endif
 }

@@ -11,9 +11,15 @@ if(COMMAND cmake_policy)
     endif(POLICY CMP0043)
     cmake_policy(SET CMP0048 NEW)
     message(STATUS "${CMLOC}CMP0048 set to New")
+    if(POLICY CMP0076)
+        cmake_policy(SET CMP0076 NEW)
+    endif(POLICY CMP0076)
     if(POLICY CMP0077)
         cmake_policy(SET CMP0077 NEW)
     endif(POLICY CMP0077)
+    if(POLICY CMP0079)
+        cmake_policy(SET CMP0079 NEW)
+    endif(POLICY CMP0079)
 endif(COMMAND cmake_policy)
 
 set(VERBOSE_NAME "OCPN_Draw")
@@ -24,9 +30,9 @@ set(PACKAGE "ocpn_draw")
 
 set(VERSION_MAJOR "1")
 set(VERSION_MINOR "8")
-set(VERSION_PATCH "0")
-set(VERSION_TWEAK "20")
-set(VERSION_DATE "02/09/2020")
+set(VERSION_PATCH "6")
+set(VERSION_TWEAK "11")
+set(VERSION_DATE "23/03/2021") # DD/MM/YYYY format
 set(OCPN_MIN_VERSION "ov50")
 set(OCPN_API_VERSION_MAJOR "1")
 set(OCPN_API_VERSION_MINOR "16")
@@ -48,8 +54,10 @@ set(PROD "prod") # Standard Repos
 set(BETA "beta") # Standard Repos
 set(ALPHA "alpha") # Standard Repos
 
-set(CLOUDSMITH_USER "jon-gough")
+set(CLOUDSMITH_USER "opencpn")
 # set this if your cloudsmith repository name does not match your git repository name set(CLOUDSMITH_BASE_REPOSITORY "${GIT_REPOSITORY_NAME}")
+set(CLOUDSMITH_BASE_REPOSITORY "ocpn_draw")
+
 set(XML_INFO_URL "https://opencpn.org/OpenCPN/plugins/draw.html")
 set(XML_SUMMARY "Drawing Plugin to allow extra objects to be drawn and used within OCPN")
 set(XML_DESCRIPTION "OCPN_DRAW (OD) is a plugin that extends the capability of OCPN to include non-standard object: Boundaries, Boundary Points, Text Points, Dead Reckoning paths, Electronic Bearing Lines (EBL) and Guard Zones. The plugin also has an API to allow other plugins to directly interact with it.")
@@ -97,7 +105,15 @@ option(Plugin_CXX11 "Use c++11" OFF)
 # ----- Modify section above if there are special requirements for the plugin ----- ##
 #
 
-include("cmake/PluginConfigure.cmake")
+##
+## ----- do not change next section - needed to configure build process ----- ##
+##
+
+include("PluginConfigure")
+
+##
+## ----- do not change section above - needed to configure build process ----- ##
+##
 
 #
 # ----- Change below to match project requirements ----- ##
@@ -228,9 +244,7 @@ set(OCPNSRC
     ocpnsrc/Hyperlink.cpp
     ocpnsrc/SelectItem.cpp
     ocpnsrc/TexFont.cpp
-    ocpnsrc/wxJSON/jsonreader.cpp
-    ocpnsrc/wxJSON/jsonval.cpp
-    ocpnsrc/wxJSON/jsonwriter.cpp)
+)
 set(OCPNHDRS
     ocpninclude/AISTargetAlertDialog.h
     ocpninclude/AISTargetQueryDialog.h
@@ -249,29 +263,45 @@ set(OCPNHDRS
     ocpninclude/GL/glext.h
     ocpninclude/GL/gl_private.h
     ocpninclude/GL/glu.h
-    ocpninclude/wx/json_defs.h
-    ocpninclude/wx/jsonreader.h
-    ocpninclude/wx/jsonval.h
-    ocpninclude/wx/jsonwriter.h)
+)
+set(EXTSRC
+    extsrc/clipper.cpp
+    extsrc/pugixml.cpp
+)
 
-set(EXTSRC ${EXTSRC} extsrc/clipper.cpp extsrc/pugixml.cpp)
+set(EXTINCLUDE
+    extinclude/clipper.hpp
+    extinclude/pugixml.hpp
+    extinclude/pugiconfig.hpp
+)
 
-set(EXTINCLUDE ${EXTINCLUDE} extinclude/clipper.hpp extinclude/pugiconfig.hpp extinclude/pugixml.hpp)
+set(LIBSRC
+)
 
-if(APPLE)
+set(LIBHDRS
+    libs/GL/gl.h
+    libs/GL/gl_private.h
+    libs/GL/glext.h
+    libs/GL/glu.h
+)
+
+set (EXTINCLUDE_DIR ${EXTINCLUDE_DIR} extinclude)
+
+if(APPLE OR QT_ANDROID)
     option(OD_JSON_SCHEMA_VALIDATOR "Use JSON Schema validator" OFF)
-else(APPLE)
+else(APPLE OR QT_ANDROID)
     option(OD_JSON_SCHEMA_VALIDATOR "Use JSON Schema validator" ON)
-endif(APPLE)
+endif(APPLE OR QT_ANDROID)
 
 if(OD_JSON_SCHEMA_VALIDATOR)
     message(STATUS "${CMLOC}Using JSON Schema validation - warning this changes the 'flavour' of the executable and it may not be compatible with OpenCPN")
     add_definitions(-DOD_JSON_SCHEMA_VALIDATOR)
     message(STATUS "${CMLOC}Adding JSON Schema validation")
 
-    set(EXTSRC ${EXTSRC} extsrc/json-schema-validator/json-schema-draft7.json.cpp extsrc/json-schema-validator/json-uri.cpp extsrc/json-schema-validator/json-validator.cpp)
-    set(EXTINCLUDE ${EXTINCLUDE} extinclude/nlohmann/json.hpp extinclude/json-schema-validator/json-schema.hpp)
-    include_directories(BEFORE ${PROJECT_SOURCE_DIR}/extinclude/json-schema-validator)
+    set(EXTSRC ${EXTSRC} extsrc/json-schema-validator/json-schema-draft7.json.cpp extsrc/json-schema-validator/json-uri.cpp extsrc/json-schema-validator/json-validator.cpp extsrc/json-schema-validator/json-patch.cpp)
+    set(EXTINCLUDE_DIR ${EXTINCLUDE_DIR} "extinclude/json-schema-validator")
+    set(LIBSRC ${LIBSRC} libs/wxJSON/src/jsonreader.cpp libs/wxJSON/src/jsonval.cpp libs/wxJSON/src/jsonwriter.cpp)
+    set(LIBHDRS ${LIBHDRS} libs/wx/include/wx/json_defs.h libs/wx/include/wx/jsonreader.h libs/wx/include/wx/jsonval.h libs/wx/include/wx/jsonwriter.h)
 else(OD_JSON_SCHEMA_VALIDATOR)
     message(STATUS "${CMLOC}Not using JSON Schema validation - warning invalid JSON 'may' cause unexpected crashes")
 endif(OD_JSON_SCHEMA_VALIDATOR)
@@ -281,7 +311,6 @@ option(OD_USE_SVG "Use SVG graphics" ON)
 if(OD_USE_SVG)
     message(STATUS "${CMLOC}SVG support enabled...")
     if(NOT QT_ANDROID)
-
         add_definitions(-DODraw_USE_SVG)
     endif(NOT QT_ANDROID)
 endif(OD_USE_SVG)
@@ -293,36 +322,35 @@ if(OCPN_MIN_VERSION)
     endif(NOT QT_ANDROID)
 endif(OCPN_MIN_VERSION)
 
-include_directories(BEFORE ${PROJECT_SOURCE_DIR}/extsrc/mygdal)
+include_directories(BEFORE ${PROJECT_SOURCE_DIR}/include)
 include_directories(BEFORE ${PROJECT_SOURCE_DIR}/ocpninclude)
 include_directories(BEFORE ${PROJECT_SOURCE_DIR}/ocpnsrc/glu/include)
-include_directories(BEFORE ${PROJECT_SOURCE_DIR}/extinclude)
+include_directories(BEFORE ${PROJECT_SOURCE_DIR}/${EXTINCLUDE_DIR})
+include_directories(BEFORE ${PROJECT_SOURCE_DIR}/libs/)
+include_directories(BEFORE ${PROJECT_SOURCE_DIR}/libs/wx/include/wx)
 include_directories(BEFORE ${PROJECT_SOURCE_DIR}/ocpninclude/wxcurl)
 include_directories(BEFORE ${PROJECT_SOURCE_DIR}/ocpninclude/wxcurl/include)
-include_directories(BEFORE ${PROJECT_SOURCE_DIR}/ocpninclude/GL)
 include_directories(BEFORE ${PROJECT_SOURCE_DIR}/ocpnsrc/lz4)
 include_directories(BEFORE ${PROJECT_SOURCE_DIR}/ocpnsrc/bitmaps)
 
-if(UNIX)
-    include("cmake/FindTinyXML.cmake")
-    find_package(TinyXML QUIET)
-endif(UNIX)
+target_sources(${PACKAGE_NAME} PUBLIC ${SRCS} ${HDRS} ${OCPNSRC} ${EXTSRC} ${LIBSRC})
 
-if(TINYXML_FOUND)
-    message(STATUS "${CMLOC}Building with system tinyxml")
-    include_directories(${TINYXML_INCLUDE_DIR})
-    add_library(${PACKAGE_NAME} SHARED ${SRCS} ${HDRS} ${OCPNSRC} ${EXTSRC})
-    target_link_libraries(${PACKAGE_NAME} ${TINYXML_LIBRARIES})
-else(TINYXML_FOUND)
-    message(STATUS "${CMLOC}Building with embedded tinyxml")
-    include_directories(extsrc/tinyxml/)
-    set(SRC_LTINYXML extsrc/tinyxml/tinyxml.cpp extsrc/tinyxml/tinyxmlparser.cpp extsrc/tinyxml/tinyxmlerror.cpp)
-    add_library(${PACKAGE_NAME} SHARED ${SRCS} ${HDRS} ${OCPNSRC} ${EXTSRC} ${SRC_LTINYXML})
-endif(TINYXML_FOUND)
+if(NOT OCPN_FLATPAK_CONFIG)
+    # Build environment not available when flatpak is being configured so following statements will not work
+    message(STATUS "${CMLOC}Adding target link libraries to ${PACKAGE_NAME}")
+
+    add_subdirectory(libs/gdal)
+    add_subdirectory(libs/tinyxml)
+
+    target_link_libraries(${PACKAGE_NAME} ocpn::gdal)
+    target_link_libraries(${PACKAGE_NAME} ocpn::tinyxml)
+endif(NOT OCPN_FLATPAK_CONFIG)
+
 
 add_definitions(-DTIXML_USE_STL)
 
-if(UNIX AND NOT APPLE)
+message(STATUS "${CMLOC}Checking to see if JSON Schema needs checking")
+if(UNIX AND NOT APPLE AND NOT QT_ANDROID)
     if(OD_JSON_SCHEMA_VALIDATOR)
         # Change OS/ABI to be UNIX - System V to make it run with OCPN
         set(lib_name lib${PACKAGE_NAME}.so)
@@ -341,14 +369,14 @@ if(UNIX AND NOT APPLE)
             message(STATUS "${CMLOC}Cannot correct OS/ABI to match OCPN if it is generated incorrectly. Package binutils needed")
         endif(NOT (${elfedit} STREQUAL "elfedit-NOTFOUND"))
     endif(OD_JSON_SCHEMA_VALIDATOR)
-endif(UNIX AND NOT APPLE)
+endif(UNIX AND NOT APPLE AND NOT QT_ANDROID)
 
 get_property(
     dirs
     DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     PROPERTY INCLUDE_DIRECTORIES)
 foreach(dir ${dirs})
-    message(STATUS "${CMLOC}dir='${dir}'")
+    message(STATUS "${CMLOC}include dir='${dir}'")
 endforeach()
 
 #

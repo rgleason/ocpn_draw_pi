@@ -44,7 +44,15 @@
 #include "ODdc.h"
 //#include "dychart.h"
 #include <wx/gdicmn.h>
-#include "gl.h"
+
+#ifndef __OCPN__ANDROID__
+#include <GL/gl.h>
+#include <GL/glu.h>
+#else
+#include "qopengl.h"                  // this gives us the qt runtime gles2.h
+#include <GL/gl_private.h>
+#endif
+
 
 #include <wx/listimpl.cpp>
 WX_DEFINE_LIST ( PathList );
@@ -597,6 +605,9 @@ void ODPath::RenderSegmentArrowsGL( int xa, int ya, int xb, int yb, PlugIn_ViewP
     glEnd();
 
     glPopMatrix();
+
+#else
+    wxLogMessage( _("Path Segment Arrow not drawn as OpenGL not available in this build") );
 #endif
 }
 

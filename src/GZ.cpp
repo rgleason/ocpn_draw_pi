@@ -164,6 +164,7 @@ void GZ::Draw( ODDC& dc, PlugIn_ViewPort &piVP )
         RenderSegment( dc, l_l2p1.x, l_l2p1.y, l_l1p1.x, l_l1p1.y, piVP, false );
 
         // fill GZ
+#if wxUSE_GRAPHICS_CONTEXT == 1
         wxGraphicsContext *wxGC = NULL;
         wxMemoryDC *pmdc = wxDynamicCast(dc.GetDC(), wxMemoryDC);
         if( pmdc ) wxGC = wxGraphicsContext::Create( *pmdc );
@@ -172,7 +173,6 @@ void GZ::Draw( ODDC& dc, PlugIn_ViewPort &piVP )
             if( pcdc ) wxGC = wxGraphicsContext::Create( *pcdc );
         }
         assert(wxGC);
-
         wxGC->SetPen(*wxTRANSPARENT_PEN);
         wxColour tCol;
         tCol.Set(m_fillcol.Red(), m_fillcol.Green(), m_fillcol.Blue(), m_uiFillTransparency);
@@ -186,8 +186,9 @@ void GZ::Draw( ODDC& dc, PlugIn_ViewPort &piVP )
         path.CloseSubpath();
         wxGC->StrokePath(path);
         wxGC->FillPath( path );
-        delete wxGC;
 
+        delete wxGC;
+#endif
     }
     
 }
@@ -299,7 +300,9 @@ void GZ::DrawGL( PlugIn_ViewPort &piVP )
 
     dc.DrawLines( numpoints, points );
     delete [] points;
-    
+
+#else
+    wxLogMessage( _("Guard Zone not drawn as OpenGL not available in this build") );
 #endif
     
 }

@@ -37,18 +37,18 @@
 #endif
 
 #ifdef __WXMSW__
-    #include "GL/gl.h"            // local copy for Windows
-    #include "GL/glext.h"
-    #include <GL/glu.h>
+#include <GL/gl.h>            // local copy for Windows
+#include <GL/glext.h>
+#include <GL/glu.h>
 #else
 
-    #ifndef __OCPN__ANDROID__
-        #include <GL/gl.h>
-        #include <GL/glu.h>
-    #else
-        #include "qopengl.h"                  // this gives us the qt runtime gles2.h
-        #include "GL/gl_private.h"
-    #endif
+#ifndef __OCPN__ANDROID__
+#include <GL/gl.h>
+#include <GL/glu.h>
+#else
+#include "qopengl.h"                  // this gives us the qt runtime gles2.h
+#include <GL/gl_private.h>
+#endif
 
 #endif
 
@@ -80,7 +80,13 @@ int         g_iTextureWidth;
 ODDC::ODDC( wxGLCanvas &canvas ) :
         glcanvas( &canvas ), dc( NULL ), m_pen( wxNullPen ), m_brush( wxNullBrush )
 {
-#if wxUSE_GRAPHICS_CONTEXT
+#ifdef wxUSE_GRAPHICS_CONTEXT
+    #define VALUE_TO_STRING(x) #x
+    #define VALUE(x) VALUE_TO_STRING(x)
+    #define VAR_NAME_VALUE(var) #var "="  VALUE(var)
+    #pragma message(VAR_NAME_VALUE(wxUSE_GRAPHICS_CONTEXT))
+#endif
+#if wxUSE_GRAPHICS_CONTEXT == 1
     pgc = NULL;
 #endif
 #ifdef ocpnUSE_GL
@@ -92,7 +98,7 @@ ODDC::ODDC( wxGLCanvas &canvas ) :
 ODDC::ODDC( wxDC &pdc ) :
         glcanvas( NULL ), dc( &pdc ), m_pen( wxNullPen ), m_brush( wxNullBrush )
 {
-#if wxUSE_GRAPHICS_CONTEXT
+#if wxUSE_GRAPHICS_CONTEXT == 1
     pgc = NULL;
     wxMemoryDC *pmdc = wxDynamicCast(dc, wxMemoryDC);
     if( pmdc ) pgc = wxGraphicsContext::Create( *pmdc );
@@ -109,7 +115,7 @@ ODDC::ODDC( wxDC &pdc ) :
 ODDC::ODDC() :
         glcanvas( NULL ), dc( NULL ), m_pen( wxNullPen ), m_brush( wxNullBrush )
 {
-#if wxUSE_GRAPHICS_CONTEXT
+#if wxUSE_GRAPHICS_CONTEXT == 1
     pgc = NULL;
 #endif
     g_bTexture2D = false;
@@ -117,7 +123,7 @@ ODDC::ODDC() :
 
 ODDC::~ODDC()
 {
-#if wxUSE_GRAPHICS_CONTEXT
+#if wxUSE_GRAPHICS_CONTEXT == 1
     if( pgc ) delete pgc;
 #endif
 }
@@ -716,6 +722,7 @@ void ODDC::DrawSector( wxCoord xc, wxCoord yc, wxCoord x1, wxCoord y1, wxCoord x
         wxDouble  l_OuterRadius = sqrt(pow((y2-yc), 2.0) + pow((x2-xc), 2.0));
         wxDouble l_InnerRadius = sqrt(pow((y1-yc), 2.0) + pow((x1-xc), 2.0));
         
+#if wxUSE_GRAPHICS_CONTEXT == 1
         wxGraphicsContext *wxGC = NULL;
         wxMemoryDC *pmdc = wxDynamicCast(GetDC(), wxMemoryDC);
         if( pmdc ) wxGC = wxGraphicsContext::Create( *pmdc );
@@ -727,7 +734,7 @@ void ODDC::DrawSector( wxCoord xc, wxCoord yc, wxCoord x1, wxCoord y1, wxCoord x
             wxGC->SetPen(dc->GetPen());
             wxGC->SetBrush(dc->GetBrush());
             wxGraphicsPath gpath = wxGC->CreatePath();
-            
+
             gpath.MoveToPoint( x1, y1 );
             gpath.AddLineToPoint( x2, y2 );
             gpath.AddArc( xc, yc, l_OuterRadius, l_dFirstAngle, l_dSecondAngle, true );
@@ -737,6 +744,12 @@ void ODDC::DrawSector( wxCoord xc, wxCoord yc, wxCoord x1, wxCoord y1, wxCoord x
 
             wxGC->FillPath(gpath);
         }
+#else
+        wxPoint *points;
+        int numpoints = ArcSectorPoints( *&points, xc, yc, x1, y1, x2, y2, x3, y3, x4, y4, true);
+        DrawPolygon(numpoints, points);
+        delete [] points;
+#endif
     }
 #ifdef ocpnUSE_GL
     else {
@@ -751,7 +764,7 @@ void ODDC::DrawSector( wxCoord xc, wxCoord yc, wxCoord x1, wxCoord y1, wxCoord x
 
 void ODDC::StrokeLine( wxCoord x1, wxCoord y1, wxCoord x2, wxCoord y2 )
 {
-#if wxUSE_GRAPHICS_CONTEXT
+#if wxUSE_GRAPHICS_CONTEXT == 1
     if( pgc ) {
         pgc->SetPen( dc->GetPen() );
         pgc->StrokeLine( x1, y1, x2, y2 );
@@ -767,7 +780,7 @@ void ODDC::StrokeLines( int n, wxPoint *points) {
     if(n < 2) /* optimization and also to avoid assertion in pgc->StrokeLines */
         return;
 
-#if wxUSE_GRAPHICS_CONTEXT
+#if wxUSE_GRAPHICS_CONTEXT == 1
     if( pgc ) {
         wxPoint2DDouble* dPoints = (wxPoint2DDouble*) malloc( n * sizeof( wxPoint2DDouble ) );
         for( int i=0; i<n; i++ ) {
@@ -784,7 +797,7 @@ void ODDC::StrokeLines( int n, wxPoint *points) {
 
 void ODDC::StrokeArc( wxCoord xc, wxCoord yc, wxCoord x1, wxCoord y1, wxCoord x2, wxCoord y2 )
 {
-    #if wxUSE_GRAPHICS_CONTEXT
+#if wxUSE_GRAPHICS_CONTEXT == 1
     if( pgc ) {
         pgc->SetPen( dc->GetPen() );
         pgc->SetBrush(dc->GetBrush());
@@ -800,13 +813,13 @@ void ODDC::StrokeArc( wxCoord xc, wxCoord yc, wxCoord x1, wxCoord y1, wxCoord x2
         dc->CalcBoundingBox( x1, y1 );
         dc->CalcBoundingBox( x2, y2 );
     } else
-        #endif
+#endif
         DrawArc( xc, yc, x1, y1, x2, y2, true );
 }
 
 void ODDC::StrokeSector( wxCoord xc, wxCoord yc, wxCoord x1, wxCoord y1, wxCoord x2, wxCoord y2, wxCoord x3, wxCoord y3, wxCoord x4, wxCoord y4  )
 {
-#if wxUSE_GRAPHICS_CONTEXT
+#if wxUSE_GRAPHICS_CONTEXT == 1
     if( pgc ) {
         pgc->SetPen( dc->GetPen() );
         pgc->SetBrush(dc->GetBrush());
@@ -930,6 +943,7 @@ void ODDC::DrawCircle( wxCoord x, wxCoord y, wxCoord radius )
 void ODDC::DrawDisk( wxCoord x, wxCoord y, wxCoord innerRadius, wxCoord outerRadius )
 {
     if( dc ) {
+#if wxUSE_GRAPHICS_CONTEXT == 1
         wxGraphicsContext *wxGC = NULL;
         wxMemoryDC *pmdc = wxDynamicCast(GetDC(), wxMemoryDC);
         if( pmdc ) wxGC = wxGraphicsContext::Create( *pmdc );
@@ -945,6 +959,29 @@ void ODDC::DrawDisk( wxCoord x, wxCoord y, wxCoord innerRadius, wxCoord outerRad
             p.AddCircle( x, y, outerRadius );
             wxGC->FillPath(p);
         }
+#else
+        wxDC *wxDC = GetDC();
+        float innerSteps = floorf(wxMax(sqrtf(sqrtf( ((innerRadius * 2) * (innerRadius * 2)) * 2) ), 1) *M_PI);
+        float outerSteps = floorf(wxMax(sqrtf(sqrtf( ((outerRadius * 2) * (outerRadius * 2)) * 2) ), 1) *M_PI);
+        wxPoint *disk = new wxPoint[ (int) innerSteps +(int) outerSteps + 2 ];
+        float a = 0.;
+        for( int i = 0; i < (int) innerSteps; i++ ) {
+            disk[i].x = x + innerRadius * sinf( a );
+            disk[i].y = y + innerRadius * cosf( a );
+            a += 2 * M_PI /innerSteps;
+        }
+        //a = 0;
+        for( int i = 0; i < (int) outerSteps; i++) {
+            disk[i + (int) innerSteps].x = x + outerRadius * sinf( a );
+            disk[i + (int) innerSteps].y = y + outerRadius * cosf( a );
+            a -= 2 * M_PI / outerSteps;
+        }
+        int npoints[2];
+        npoints[0] = (int) innerSteps;
+        npoints[1] = (int) outerSteps;
+        wxDC->DrawPolyPolygon( 2, npoints, disk, 0, 0 );
+        delete [] disk;
+#endif
     }
 #ifdef ocpnUSE_GL
     else {
@@ -977,7 +1014,7 @@ void ODDC::DrawDisk( wxCoord x, wxCoord y, wxCoord innerRadius, wxCoord outerRad
 
 void ODDC::StrokeCircle( wxCoord x, wxCoord y, wxCoord radius )
 {
-#if wxUSE_GRAPHICS_CONTEXT
+#if wxUSE_GRAPHICS_CONTEXT == 1
     if( pgc ) {
         wxGraphicsPath gpath = pgc->CreatePath();
         gpath.AddCircle( x, y, radius );
@@ -1095,7 +1132,11 @@ void __CALL_CONVENTION ODDCvertexCallback(GLvoid* arg)
 {
     GLvertex* vertex;
     vertex = (GLvertex*) arg;
+#ifndef __OCPN__ANDROID__
     if(g_bTexture2D) glTexCoord2d( vertex->info.x / g_iTextureWidth, vertex->info.y / g_iTextureHeight );
+#else
+    if(g_bTexture2D) glTexCoord2f( vertex->info.x / g_iTextureWidth, vertex->info.y / g_iTextureHeight );
+#endif
     glVertex2d( vertex->info.x, vertex->info.y );
 }
 
@@ -1134,7 +1175,11 @@ void ODDC::DrawPolygonTessellated( int n, wxPoint points[], wxCoord xoffset, wxC
 
         gluTessNormal( tobj, 0, 0, 1);
         gluTessProperty(tobj, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ODD);
+#ifndef __OCPN__ANDROID__
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+#else
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL_NV);
+#endif
         gluTessProperty(tobj, GLU_TESS_BOUNDARY_ONLY, GL_FALSE);
 
         if(glIsEnabled(GL_TEXTURE_2D)) g_bTexture2D = true;
@@ -1190,7 +1235,11 @@ void ODDC::DrawPolygonsTessellated( int n, int npoints[], wxPoint points[], wxCo
         
         gluTessNormal( tobj, 0, 0, 1);
         gluTessProperty(tobj, GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ODD);
+        #ifndef __OCPN__ANDROID__
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        #else
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_FILL_NV);
+        #endif
         gluTessProperty(tobj, GLU_TESS_BOUNDARY_ONLY, GL_FALSE);
         
         if(glIsEnabled(GL_TEXTURE_2D)) g_bTexture2D = true;
@@ -1231,7 +1280,7 @@ void ODDC::DrawPolygonsTessellated( int n, int npoints[], wxPoint points[], wxCo
 
 void ODDC::StrokePolygon( int n, wxPoint points[], wxCoord xoffset, wxCoord yoffset, float scale )
 {
-#if wxUSE_GRAPHICS_CONTEXT
+#if wxUSE_GRAPHICS_CONTEXT == 1
     if( pgc ) {
         wxGraphicsPath gpath = pgc->CreatePath();
         gpath.MoveToPoint( points[0].x + xoffset, points[0].y + yoffset );
